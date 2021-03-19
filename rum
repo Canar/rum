@@ -4,7 +4,7 @@ require 'shellwords'
 require 'io/console'
 
 pkg='rum'
-ver='0.1'
+ver='0.2'
 pkgd="#{Dir.home}/.local/share/#{pkg}"
 
 word=4
@@ -16,9 +16,6 @@ cycle=0
 ff_exe="ffmpeg -hide_banner"
 ff_fmt="-ac #{chan} -ar #{rate} -f f#{word*8}le"
 ff_out="-f pulse default"
-
-buf=nil
-zbuf=Array.new(rate*chan,0.0).pack('e*')
 
 list=[]
 list_i=0
@@ -40,7 +37,6 @@ else
   list=ARGV
 end
 prefix=/\A(.*).*(\n\1.*)*\Z/.match(list.join("\n"))[1]
-#prefix=list.length<100 ? /\A(.*).*(\n\1.*)*\Z/.match(list.join("\n"))[1] : ""
 
 ii,io,ie,it=nil,nil,nil,nil
 oi,oo,oe,ot=Open3.popen3("#{ff_exe} #{ff_fmt} -i - #{ff_out}")
@@ -50,8 +46,8 @@ oe.close
 pt=Thread.new{
   until :quit == mode
     mode= (++list_i)>=list.count ? :quit : :load if io and io.eof?
-    case [mode,modes]
-    when [:load,modes] #load new track
+    case mode
+    when :load #load new track
       io.close unless !io or io.closed?
       toff= modes.to_i>0 ? "-ss #{modes.to_i}" : ""
       ii,io,ie,it = Open3.popen3 "#{ff_exe} -i #{Shellwords.escape(list[list_i])} #{toff} #{ff_fmt} -"
@@ -59,29 +55,16 @@ pt=Thread.new{
       ie.close
       mode=:play
       cycle=0 unless modes.to_i > 0
-      modes=nil
-    when [:play,:down] #ramp up out of pause
-      modes=nil
-      oi.write(buf.unpack('e*').map.with_index{|s,i| s*(i/2)/rate }.pack('e*'))
-    when [:play,nil] #standard play
+    when :play
       cycle+=1
       oi.write(io.read(buf_size))
-    when [:pause,nil] #ramp down into pause
-      cycle+=1
-      modes=:down
-      buf=io.read(buf_size)
-      oi.write(buf.unpack('e*').map.with_index{|s,i| s*(rate-(i/2))/rate }.pack('e*'))
-    when [:pause,:down] #pause loop
-      oi.write(zbuf)
     end
   end
 }
 
 until :quit == mode
-  print "\r#{list[list_i][prefix.length..-1]} #{cycle/60}:#{"%02d"%(cycle%60)} [N]ext #{list_i>0?"[P]rev ":""}[space]-P#{:pause == mode ? "lay" : "ause"} [Q]uit Command: "
+  print "\r#{list[list_i][prefix.length..-1]} [#{cycle/60}:#{"%02d"%(cycle%60)}] [N]ext #{list_i>0?"[P]rev ":""}[Q]uit Command: "
   case IO.console.raw{|c|c.read_nonblock(1) rescue ''}
-  when ' '
-    mode= mode==:play ? :pause : :play
   when 'n'
     mode= (++list_i)<list.count ? :load : :quit
   when 'p'
@@ -101,5 +84,5 @@ if list_i<list.count
   File.write(pkgd+"/pos",list_i.to_s+"\n"+(cycle-5).to_s)
 end
 
-puts "\r        #{pkg}   v#{ver}        "
+puts "\r        ] #{pkg} ✝ v#{ver} [        "
 pt.join
