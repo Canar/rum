@@ -30,5 +30,5 @@ Command input appears to be broken on ruby versions less than 2.7.\
 
 ## Release Log
 0.1 - Initial release.\
-0.2 - Removed play/pause volume ramping. `2021-03-19`
-0.2 - Bugfixes. `2021-03-19`
+0.2 - Removed play/pause volume ramping. `2021-03-19`\
+0.2c - Bugfixes. `2021-03-19`
