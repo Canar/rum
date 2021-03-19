@@ -2,9 +2,10 @@
 require 'open3'
 require 'shellwords'
 require 'io/console'
+require 'pathname'
 
 pkg='rum'
-ver='0.2c'
+ver='0.2d'
 pkgd="#{Dir.home}/.local/share/#{pkg}"
 
 word=4
@@ -35,7 +36,7 @@ if ARGV.length==0
     exit 1
   end
 else
-  list=ARGV
+  list=ARGV.map{|x|Pathname(x).realpath.to_s}
 end
 prefix=/\A(.*).*(\n\1.*)*\Z/.match(list.join("\n"))[1]
 
