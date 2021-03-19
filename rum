@@ -4,7 +4,7 @@ require 'shellwords'
 require 'io/console'
 
 pkg='rum'
-ver='0.2'
+ver='0.2c'
 pkgd="#{Dir.home}/.local/share/#{pkg}"
 
 word=4
@@ -27,7 +27,8 @@ if ARGV.length==0
     if File.file?("#{pkgd}/pos")
       pos=File.read("#{pkgd}/pos").split("\n")
       list_i=pos[0].to_i
-      modes=cycle=pos[1].to_i
+      cycle=pos[1].to_i
+      cycle-=3 if cycle>3
     end
   else
     puts "Usage: #{pkg} files_to_play"
@@ -45,44 +46,53 @@ oe.close
 
 pt=Thread.new{
   until :quit == mode
-    mode= (++list_i)>=list.count ? :quit : :load if io and io.eof?
+    if io and io.eof?
+      list_i+=1
+      mode=list_i>=list.count ? :quit : :load
+      cycle=0
+      puts
+    end
     case mode
     when :load #load new track
       io.close unless !io or io.closed?
-      toff= modes.to_i>0 ? "-ss #{modes.to_i}" : ""
-      ii,io,ie,it = Open3.popen3 "#{ff_exe} -i #{Shellwords.escape(list[list_i])} #{toff} #{ff_fmt} -"
+      ii,io,ie,it = Open3.popen3 "#{ff_exe} -i #{Shellwords.escape(list[list_i])} #{cycle>0 ? "-ss #{cycle}" : ''} #{ff_fmt} -"
       ii.close
       ie.close
       mode=:play
-      cycle=0 unless modes.to_i > 0
     when :play
-      cycle+=1
       oi.write(io.read(buf_size))
+      cycle+=1
     end
   end
 }
 
 until :quit == mode
-  print "\r#{list[list_i][prefix.length..-1]} [#{cycle/60}:#{"%02d"%(cycle%60)}] [N]ext #{list_i>0?"[P]rev ":""}[Q]uit Command: "
+  print "\r#{list[list_i][prefix.length..-1]} [#{cycle/60}:#{"%02d"%(cycle%60)}] [N]ext #{list_i>0?"[P]rev ":""}[Q]uit > "
   case IO.console.raw{|c|c.read_nonblock(1) rescue ''}
   when 'n'
-    mode= (++list_i)<list.count ? :load : :quit
+    list_i+=1
+    mode= list_i<list.count ? :load : :quit
+    cycle=0
+    puts
   when 'p'
     if list_i>0
       list_i-=1
       mode=:load
+      cycle=0
+      puts
     end 
   when 'q'
     mode=:quit
+  else
+    sleep rand
   end
-  sleep rand
 end
 
 if list_i<list.count
   Dir.mkdir(pkgd) unless File.directory?(pkgd)
   File.write(pkgd+"/list",list.join("\n"))
-  File.write(pkgd+"/pos",list_i.to_s+"\n"+(cycle-5).to_s)
+  File.write(pkgd+"/pos",list_i.to_s+"\n"+cycle.to_s)
 end
 
-puts "\r        ] #{pkg} ✝ v#{ver} [        "
+puts "\n        ] #{pkg} ✝ v#{ver} [        "
 pt.join

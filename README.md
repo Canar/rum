@@ -25,6 +25,10 @@ Default configuration plays to the `default` Pulseaudio device.\
 Edit the file to change the configuration.\
 Earliest commits have a play/pause volume ramping feature.
 
+Command input appears to be broken on ruby versions less than 2.7.\
+2.6 might work but has not been tested. 2.5 is broken.
+
 ## Release Log
 0.1 - Initial release.\
 0.2 - Removed play/pause volume ramping. `2021-03-19`
+0.2 - Bugfixes. `2021-03-19`
