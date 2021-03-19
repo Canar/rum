@@ -1,6 +1,6 @@
 # rum
 
-***ru***by ***m***usic\
+***ru*** by - ***m*** usic\
 *by Benjamin Cook*\
 <http://baryon.it>
 
@@ -22,7 +22,8 @@ Continue playing last created playlist:\
 
 `rum` supports every input and output format that `ffmpeg` does.\
 Default configuration plays to the `default` Pulseaudio device.\
-Edit the file to change the configuration.
+Edit the file to change the configuration.\
+Earliest commits have a play/pause volume ramping feature.
 
 ## Release Log
 0.1 - Initial release.
