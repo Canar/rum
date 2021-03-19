@@ -12,11 +12,11 @@ Plays a single, user-editable playlist gaplessly.\
 Remembers where it was when you quit.
 
 ## usage
-Create a rum playlist and play it:
-	rum file1 file2
+Create a rum playlist and play it:\
+`        rum file1 file2`
 	
-Continue playing last created playlist:
-	rum
+Continue playing last created playlist:\
+`        rum`
 
 ## releases
 0.1 - contains play/pause volume ramping\
