@@ -1,7 +1,7 @@
 # rum
 
 ***ru***by ***m***usic\
-*by Benjamin Cook*
+*by Benjamin Cook*\
 <http://baryon.it>
 
 ## Abstract
