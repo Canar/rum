@@ -1,6 +1,7 @@
-# rum: **ru**by **m**usic
+# rum
 
-### by Benjamin Cook <http://baryon.it>
+**ru**by **m**usic\
+*by Benjamin Cook <http://baryon.it>*
 
 ## abstract
 A minimalist audio player. Pipes audio between two instances of ffmpeg. Plays a single, user-editable playlist gaplessly, remembering where it was when you quit.
@@ -13,5 +14,5 @@ A minimalist audio player. Pipes audio between two instances of ffmpeg. Plays a 
 		rum
 
 ## releases
-	0.1 - contains play/pause volume ramping
-	0.2 - removed play/pause volume ramping 
+0.1 - contains play/pause volume ramping\
+0.2 - removed play/pause volume ramping 
