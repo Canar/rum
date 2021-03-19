@@ -1,10 +1,10 @@
 # rum
 
-**ru**by **m**usic\
-*by Benjamin Cook
-<http://baryon.it>*
+***ru***by ***m***usic\
+*by Benjamin Cook*
+<http://baryon.it>
 
-## abstract
+## Abstract
 
 A minimalist audio player.\
 Pipes audio between two instances of `ffmpeg`.\
@@ -18,15 +18,12 @@ Create a rum playlist and play it:\
 Continue playing last created playlist:\
 `        rum`
 
-## features and configuration
+## Features and Configuration
 
-A significant portion of the code is dedicated to configuration.\
-This project is probably uninteresting to people who won't edit code.\
 `rum` supports every input and output format that `ffmpeg` does.\
 Default configuration plays to the `default` Pulseaudio device.\
-Version 0.1 was released to archive the play/pause volume ramping.\
-Someone might use it, but I lost interest in it.
+Edit the file to change the configuration.
 
-## releases
-0.1 - contains play/pause volume ramping\
-0.2 - removed play/pause volume ramping 
+## Release Log
+0.1 - Initial release.
+0.2 - Removed play/pause volume ramping.
