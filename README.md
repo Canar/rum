@@ -6,7 +6,7 @@
 
 ## Abstract
 
-A minimalist audio player.\
+A minimalist audio player written in Ruby.\
 Pipes audio between two instances of `ffmpeg`.\
 Plays a single, user-editable playlist gaplessly.\
 Remembers where it was when you quit.
@@ -27,4 +27,4 @@ Earliest commits have a play/pause volume ramping feature.
 
 ## Release Log
 0.1 - Initial release.\
-0.2 - Removed play/pause volume ramping.
+0.2 - Removed play/pause volume ramping. `2021-03-19`
