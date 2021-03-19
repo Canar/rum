@@ -1,6 +1,6 @@
 # rum
 
-***ru*** by - ***m*** usic\
+***ru***by ***m***usic\
 *by Benjamin Cook*\
 <http://baryon.it>
 
