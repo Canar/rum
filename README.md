@@ -37,3 +37,4 @@ Zero error-handling.
 0.1 - Initial release.\
 0.2 - Removed play/pause volume ramping. `2021-03-19`\
 0.2c - Bugfixes. `2021-03-19`
+0.2d - Improved path handling. `2021-03-19`
