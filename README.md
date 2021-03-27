@@ -18,11 +18,12 @@ Create a rumu playlist and play it:\
 Continue playing last created playlist:\
 `        rumu`
 
-Keystroke commands during playback:\
-`	n - next track<br />
-	p - previous track<br />
-	q - quit rumu<br />
-	else - display commands`
+Keystroke commands during playback:
+
+**n**: next track\
+**p**: previous track\
+**q**: quit rumu\
+**else**: display commands
 
 ## Features and Configuration
 
