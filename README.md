@@ -19,17 +19,31 @@ Continue playing last created playlist:\
 `        rumu`
 
 Keystroke commands during playback:\
-**n**: next track\
 **p**: previous track\
+**r**: restart current track\
+**s**: seek in current track\
+**n**: next track\
 **q**: quit rumu\
 **else**: display commands
+
+Seek accepts whatever `ffmpeg` does.\
+See <https://trac.ffmpeg.org/wiki/Seeking> for details.
 
 ## Features and Configuration
 
 `rumu` supports every input and output format that `ffmpeg` does.\
 Default configuration plays to the `default` Pulseaudio device.\
-Edit the file to change the configuration.\
 Earliest commits have a play/pause volume ramping feature.
+
+### Configuration files
+
+Configuration is found in `$HOME/.config/rumu`.\
+`list` contains the playlist.\
+`dev` contains output device config, passed to `ffmpeg`.\
+`pos` contains position information.\
+Line 1 of `pos` is the position in `list`.\
+Line 2 of `pos` is the position in selected file in seconds.
+
 
 ## Known Issues (Won't Fix)
 Timestamp is inaccurate.\
@@ -46,3 +60,4 @@ Command input appears to be broken on ruby versions less than 2.7.\
 0.2d - Improved path handling. `2021-03-19`\
 0.3.0 - Refactored code, published Ruby gem, renamed to `rumu`. `2021-03-26`
 0.3.1 - Minor fixes. `2021-03-26`
+0.3.2 - Seek and restart, device config. `2021-03-26`

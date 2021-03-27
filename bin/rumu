@@ -5,19 +5,16 @@ require 'io/console'
 require 'pathname'
 
 pkg='rumu'
-ver='0.3.1'
+ver='0.3.2'
 pkgd="#{Dir.home}/.config/#{pkg}"
 
-word=4
-rate=44100
-chan=2
+chan,rate,word=2,44100,4
 ff_fmt="-ac #{chan} -ar #{rate} -f f#{word*8}le"
 
-cycle=0
-list=[]
-list_i=0
-mode=:load
-ssoff=''
+File.write(pkgd+"/dev","-f pulse default") unless File.file?("#{pkgd}/dev")
+ff_out=File.read(pkgd+"/dev")
+
+list,list_i,cycle,mode,ssoff,help=[],0,0,:load,'',''
 if ARGV.length==0
   if File.file?("#{pkgd}/list")
     list=File.read("#{pkgd}/list").split("\n")
@@ -36,9 +33,10 @@ else
   list=ARGV.map{|x|Pathname(x).realpath.to_s}
 end
 prefix=/\A(.*).*(\n\1.*)*\Z/.match(list.join("\n"))[1]
+puts prefix
 
 ii,io,ie,it=nil,nil,nil,nil
-oi,oo,oe,ot=Open3.popen3("ffmpeg #{ff_fmt} -i - -f pulse default")
+oi,oo,oe,ot=Open3.popen3("ffmpeg #{ff_fmt} -i - #{ff_out}")
 oo.close
 
 pt=Thread.new{
@@ -51,6 +49,8 @@ pt=Thread.new{
     when :load #load new track
       [io,ie].each{|x|x.close} unless !io or io.closed?
       ii,io,ie,it = Open3.popen3 "ffmpeg -i #{Shellwords.escape(list[list_i])} #{ssoff} #{ff_fmt} -"
+      print ' '*help.length
+      help=''
       puts "\r#{list[list_i][prefix.length..-1]}"
       ii.close
       cycle=0 unless ssoff.length > 0
@@ -65,29 +65,34 @@ pt=Thread.new{
 
 until :quit == mode
   print "\r#{cycle/60}:#{"%02d"%(cycle%60)} > "
-  case ch=IO.console.raw{|c|c.read_nonblock(1) rescue ''}
+  case ch=IO.console.raw{|c|c.read_nonblock(1) rescue ''}.downcase
   when 'n'
     list_i+=1
     mode= list_i<list.count ? :load : :quit
+  when 'r'
+    mode=:load
   when 'p'
     if list_i>0
       list_i-=1
       mode=:load
     end 
+  when 's'
+    print "Seek to: "
+    ti=(ts=IO.console.readline.chomp).split(':')
+    ssoff="-ss #{ts}"
+    cycle=(ti[-1].to_f + ti[-2].to_f*60 + ti[-3].to_f*60*60).to_i
+    mode=:load
   when 'q'
     mode=:quit
+    Dir.mkdir(pkgd) unless File.directory?(pkgd)
+    File.write(pkgd+"/list",list.join("\n"))
+    File.write(pkgd+"/pos",list_i.to_s+"\n"+cycle.to_s)
   when ''
     sleep rand
   else
-    print "#{ch} < [N]ext #{list_i>0?"[P]rev ":""}[Q]uit"
+    print (help="#{ch} < #{list_i>0?"[P]rev ":""}[R]estart [S]eek [N]ext [Q]uit")
   end
 end
 
-if list_i<list.count
-  Dir.mkdir(pkgd) unless File.directory?(pkgd)
-  File.write(pkgd+"/list",list.join("\n"))
-  File.write(pkgd+"/pos",list_i.to_s+"\n"+cycle.to_s)
-end
-
-puts "\r        ]  #{pkg} ✝ v#{ver}  [        "
+puts "\r    ]  #{pkg} ✝ v#{ver}  [    "
 pt.join
