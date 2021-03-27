@@ -4,14 +4,13 @@ require 'shellwords'
 require 'io/console'
 require 'pathname'
 
-pkg='rum'
-ver='0.2d'
-pkgd="#{Dir.home}/.local/share/#{pkg}"
+pkg='rumu'
+ver='0.3'
+pkgd="#{Dir.home}/.config/#{pkg}"
 
 word=4
-rate=48000
+rate=44100
 chan=2
-buf_size=word*chan*rate
 cycle=0
 
 ff_exe="ffmpeg -hide_banner"
@@ -21,7 +20,7 @@ ff_out="-f pulse default"
 list=[]
 list_i=0
 mode=:load
-modes=nil
+toff=''
 if ARGV.length==0
   if File.file?("#{pkgd}/list")
     list=File.read("#{pkgd}/list").split("\n")
@@ -30,6 +29,7 @@ if ARGV.length==0
       list_i=pos[0].to_i
       cycle=pos[1].to_i
       cycle-=3 if cycle>3
+      ssoff="-ss #{cycle} " if cycle>0
     end
   else
     puts "Usage: #{pkg} files_to_play"
@@ -42,26 +42,24 @@ prefix=/\A(.*).*(\n\1.*)*\Z/.match(list.join("\n"))[1]
 
 ii,io,ie,it=nil,nil,nil,nil
 oi,oo,oe,ot=Open3.popen3("#{ff_exe} #{ff_fmt} -i - #{ff_out}")
-oo.close
-oe.close
+[oo,oe].each{|x|x.close}
 
 pt=Thread.new{
   until :quit == mode
     if io and io.eof?
       list_i+=1
       mode=list_i>=list.count ? :quit : :load
-      cycle=0
-      puts
     end
     case mode
     when :load #load new track
       io.close unless !io or io.closed?
-      ii,io,ie,it = Open3.popen3 "#{ff_exe} -i #{Shellwords.escape(list[list_i])} #{cycle>0 ? "-ss #{cycle}" : ''} #{ff_fmt} -"
-      ii.close
-      ie.close
+      ii,io,ie,it = Open3.popen3 "#{ff_exe} -i #{Shellwords.escape(list[list_i])} #{ssoff} #{ff_fmt} -"
+      [ii,ie].each{|x|x.close}
+      cycle=0 unless ssoff.length > 0
+      puts
       mode=:play
     when :play
-      oi.write(io.read(buf_size))
+      oi.write(io.read(word*chan*rate))
       cycle+=1
     end
   end
@@ -73,14 +71,10 @@ until :quit == mode
   when 'n'
     list_i+=1
     mode= list_i<list.count ? :load : :quit
-    cycle=0
-    puts
   when 'p'
     if list_i>0
       list_i-=1
       mode=:load
-      cycle=0
-      puts
     end 
   when 'q'
     mode=:quit
@@ -95,5 +89,5 @@ if list_i<list.count
   File.write(pkgd+"/pos",list_i.to_s+"\n"+cycle.to_s)
 end
 
-puts "\n        ] #{pkg} ✝ v#{ver} [        "
+puts "        ]  #{pkg} ✝ v#{ver}  [        "
 pt.join
