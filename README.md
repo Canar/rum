@@ -19,9 +19,9 @@ Continue playing last created playlist:\
 `        rumu`
 
 Keystroke commands during playback:\
-`	n - next track
-	p - previous track
-	q - quit rumu
+`	n - next track\
+	p - previous track\
+	q - quit rumu\
 	else - display commands`
 
 ## Features and Configuration
