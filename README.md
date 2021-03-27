@@ -1,4 +1,4 @@
-# rum
+# rumu
 
 ***ru***by ***mu***sic\
 *by Benjamin Cook*\
@@ -18,13 +18,18 @@ Create a rumu playlist and play it:\
 Continue playing last created playlist:\
 `        rumu`
 
+During playback:\
+`  n - next track`\
+`  p - previous track`\
+`  q - quit rumu`\
+`  else - display commands`
+
 ## Features and Configuration
 
 `rumu` supports every input and output format that `ffmpeg` does.\
 Default configuration plays to the `default` Pulseaudio device.\
 Edit the file to change the configuration.\
 Earliest commits have a play/pause volume ramping feature.
-
 
 ## Known Issues (Won't Fix)
 Timestamp is inaccurate.\
@@ -38,4 +43,6 @@ Command input appears to be broken on ruby versions less than 2.7.\
 0.1 - Initial release.\
 0.2 - Removed play/pause volume ramping. `2021-03-19`\
 0.2c - Bugfixes. `2021-03-19`\
-0.2d - Improved path handling. `2021-03-19`
+0.2d - Improved path handling. `2021-03-19`\
+0.3.0 - Refactored code, published Ruby gem, renamed to `rumu`. `2021-03-26`
+0.3.1 - Minor fixes. `2021-03-26`

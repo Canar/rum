@@ -1,8 +1,8 @@
 Gem::Specification.new do |s|
   s.name        = 'rumu'
-  s.version     = '0.3.0'
+  s.version     = '0.3.1'
   s.summary     = '(ru)by (mu)usic - a minimal ffmpeg-based gapless audio playlist player'
-  s.description = 'rum is an aggressively minimized audio player that plays a playlist gaplessly leveraging command-line ffmpeg and pipes. After a quit, it will return to where it left off when run next.'
+  s.description = 'rumu is an aggressively minimized audio player that plays a playlist gaplessly leveraging command-line ffmpeg and pipes. After a quit, it will return to where it left off when run next.'
   s.author      = 'Benjamin Cook'
   s.email       = 'root@baryon.it'
   s.files       << 'bin/rumu'
