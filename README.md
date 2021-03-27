@@ -18,7 +18,7 @@ Create a rumu playlist and play it:\
 Continue playing last created playlist:\
 `        rumu`
 
-Keystroke commands during playback:\
+Keystroke commands during playback:
 	n - next track
 	p - previous track
 	q - quit rumu
