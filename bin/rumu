@@ -5,7 +5,7 @@ require 'io/console'
 require 'pathname'
 
 pkg='rumu'
-ver='0.3.3'
+ver='0.3.4'
 pkgd="#{Dir.home}/.config/#{pkg}"
 
 chan,rate,word=2,44100,4
@@ -37,7 +37,7 @@ prefix=/\A(.*).*(\n\1.*)*\Z/.match(list.join("\n"))[1]
 puts prefix
 
 ii,io,ie,it=nil,nil,nil,nil
-oi,oo,oe,ot=Open3.popen3("ffmpeg #{ff_fmt} -i - #{ff_out}")
+oi,oo,oe,ot=Open3.popen3("ffmpeg -loglevel -8 #{ff_fmt} -i - #{ff_out}")
 oo.close
 
 pt=Thread.new{
@@ -49,7 +49,7 @@ pt=Thread.new{
     case mode
     when :load #load new track
       [io,ie].each{|x|x.close} unless !io or io.closed?
-      ii,io,ie,it = Open3.popen3 "ffmpeg -i #{Shellwords.escape(list[list_i])} #{ssoff} #{ff_fmt} -"
+      ii,io,ie,it = Open3.popen3 "ffmpeg -loglevel -8 -i #{Shellwords.escape(list[list_i])} #{ssoff} #{ff_fmt} -"
       ii.close
       cycle=0 unless ssoff.length > 0
       puts "#{' '*help.length}\r#{list[list_i][prefix.length..-1]}"
@@ -61,6 +61,7 @@ pt=Thread.new{
       cycle+=1
     end
   end
+  [oi,oe].each{|x|x.close}
 }
 
 until :quit == mode
@@ -86,6 +87,7 @@ until :quit == mode
     mode=:quit
     File.write(pkgd+"/list",list.join("\n"))
     File.write(pkgd+"/pos",list_i.to_s+"\n"+cycle.to_s)
+    log.close
   when ''
     sleep rand
   else

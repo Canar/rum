@@ -61,4 +61,5 @@ Command input appears to be broken on ruby versions less than 2.7.\
 0.3.0 - Refactored code, published Ruby gem, renamed to `rumu`. `2021-03-26`\
 0.3.1 - Minor fixes. `2021-03-26`\
 0.3.2 - Seek and restart, device config. `2021-03-26`\
-0.3.3 - Fixed crash bug on new installs. `2021-03-29`
+0.3.3 - Fixed crash bug on new installs. `2021-03-29`\
+0.3.4 - Fixed an output hang. `2021-03-29`
