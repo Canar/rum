@@ -5,12 +5,13 @@ require 'io/console'
 require 'pathname'
 
 pkg='rumu'
-ver='0.3.2'
+ver='0.3.3'
 pkgd="#{Dir.home}/.config/#{pkg}"
 
 chan,rate,word=2,44100,4
 ff_fmt="-ac #{chan} -ar #{rate} -f f#{word*8}le"
 
+Dir.mkdir(pkgd) unless File.directory?(pkgd)
 File.write(pkgd+"/dev","-f pulse default") unless File.file?("#{pkgd}/dev")
 ff_out=File.read(pkgd+"/dev")
 
@@ -49,12 +50,11 @@ pt=Thread.new{
     when :load #load new track
       [io,ie].each{|x|x.close} unless !io or io.closed?
       ii,io,ie,it = Open3.popen3 "ffmpeg -i #{Shellwords.escape(list[list_i])} #{ssoff} #{ff_fmt} -"
-      print ' '*help.length
-      help=''
-      puts "\r#{list[list_i][prefix.length..-1]}"
       ii.close
       cycle=0 unless ssoff.length > 0
+      puts "#{' '*help.length}\r#{list[list_i][prefix.length..-1]}"
       ssoff=''
+      help=''
       mode=:play
     when :play
       oi.write(io.read(word*chan*rate))
@@ -84,7 +84,6 @@ until :quit == mode
     mode=:load
   when 'q'
     mode=:quit
-    Dir.mkdir(pkgd) unless File.directory?(pkgd)
     File.write(pkgd+"/list",list.join("\n"))
     File.write(pkgd+"/pos",list_i.to_s+"\n"+cycle.to_s)
   when ''
