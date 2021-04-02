@@ -6,7 +6,7 @@ require 'pathname'
 require 'ffi'
 require 'pulseaudio_simple_ffi'
 
-pkg='rumu-pulse'
+pkg='rumu'
 ver='0.4.0'
 ConfigDir="#{Dir.home}/.config/#{pkg}"
 Dir.mkdir(ConfigDir) unless File.directory?(ConfigDir)
