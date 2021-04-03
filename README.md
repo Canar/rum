@@ -7,7 +7,7 @@
 ## Abstract
 
 A minimalist audio player written in Ruby.\
-Pipes audio between two instances of `ffmpeg`.\
+Pipes audio from `ffmpeg` into another `ffmpeg` or `PulseAudio`.\
 Plays a single, user-editable playlist gaplessly.\
 Remembers where it was when you quit.
 
@@ -32,22 +32,25 @@ See <https://trac.ffmpeg.org/wiki/Seeking> for details.
 ## Features and Configuration
 
 `rumu` supports every input and output format that `ffmpeg` does.\
-Default configuration plays to the `default` Pulseaudio device.\
-Earliest commits have a play/pause volume ramping feature.
+Default configuration plays to the `default` Pulseaudio device.
 
 ### Configuration files
 
-Configuration is found in `$HOME/.config/rumu`.\
-`list` contains the playlist.\
-`dev` contains output device config, passed to `ffmpeg`.\
+Configuration is found in `$HOME/.config/rumu`.
+
+`list` contains the playlist.
+
 `pos` contains position information.\
 Line 1 of `pos` is the position in `list`.\
 Line 2 of `pos` is the position in selected file in seconds.
 
+`out` contains output configuration.\
+Line 1 of `out` is `ffmpeg` or `pulse`.\
+For `ffmpeg`, line 2 is the output stanza, eg. `-f pulse default`\
+For `pulse`, line 2 is the audio device, eg. `default`
 
 ## Known Issues (Won't Fix)
 Timestamp is inaccurate.\
-Initial audio might get truncated.\
 Zero error-handling.
 
 Command input appears to be broken on ruby versions less than 2.7.\
@@ -64,4 +67,4 @@ Command input appears to be broken on ruby versions less than 2.7.\
 0.3.3 - Fixed crash bug on new installs. `2021-03-29`\
 0.3.4 - Fixed an output hang. `2021-03-29`\
 0.3.5 - Removed leftover debug code. `2021-03-30`\
-0.4.0 - Modularized output devices, created native FFI PulseAudio lib. `2021-04-02`
+0.4.0 - Modularized output devices, created native [FFI PulseAudio lib](https://github.com/Canar/pulseaudio_simple_ffi). `2021-04-02`
