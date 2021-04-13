@@ -49,9 +49,9 @@ Line 1 of `out` is `ffmpeg` or `pulse`.\
 For `ffmpeg`, line 2 is the output stanza, eg. `-f pulse default`\
 For `pulse`, line 2 is the audio device, eg. `default`
 
-## Known Issues (Won't Fix)
+## Known Issues
 Timestamp is inaccurate.\
-Zero error-handling.
+Zero error-handling. Not opposed to adding some, but I never encounter errors.
 
 Command input appears to be broken on ruby versions less than 2.7.\
 2.6 might work but has not been tested. 2.5 is broken.
@@ -67,4 +67,5 @@ Command input appears to be broken on ruby versions less than 2.7.\
 0.3.3 - Fixed crash bug on new installs. `2021-03-29`\
 0.3.4 - Fixed an output hang. `2021-03-29`\
 0.3.5 - Removed leftover debug code. `2021-03-30`\
-0.4.0 - Modularized output devices, created native [FFI PulseAudio lib](https://github.com/Canar/pulseaudio_simple_ffi). `2021-04-02`
+0.4.0 - Modularized output devices, created native [FFI PulseAudio lib](https://github.com/Canar/pulseaudio_simple_ffi). `2021-04-02`\
+0.4.1 - Split input code into separate thread, added buffer queue. `2021-04-13`\

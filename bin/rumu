@@ -3,71 +3,70 @@ require 'open3'
 require 'shellwords'
 require 'io/console'
 require 'pathname'
-require 'ffi'
 require 'pulseaudio_simple_ffi'
 
-pkg='rumu'
-ver='0.4.0'
-ConfigDir="#{Dir.home}/.config/#{pkg}"
+Pkg='rumu'
+Ver='0.4.1'
+ConfigDir="#{Dir.home}/.config/#{Pkg}"
 Dir.mkdir(ConfigDir) unless File.directory?(ConfigDir)
 
 Channels,Rate,WordSize=2,44100,4
 FfmpegFmt="-ac #{Channels} -ar #{Rate} -f f#{WordSize*8}le"
 
 class FfmpegPipeO
-  def initialize(device, channels: Channels, rate: Rate, wordsize: WordSize )
-    device = device.to_s.chomp.length>0 ? device.to_s.chomp : '-f pulse default'
-    @in,@out,@err,@thr = Open3.popen3("ffmpeg -loglevel -8 #{FfmpegFmt} -i - #{device}")
-    @out.close
-    @err.close
-  end
-  def write buf
-    @in.write buf
-  end
-  def close
-    @in.close
-  end
+	def initialize(device, channels: Channels, rate: Rate, wordsize: WordSize )
+		device = device.to_s.chomp.length>0 ? device.to_s.chomp : '-f pulse default'
+		@in,@out,@err,@thr = Open3.popen3("ffmpeg -loglevel -8 #{FfmpegFmt} -i - #{device}")
+		@out.close
+		@err.close
+	end
+	def write buf
+		@in.write buf
+	end
+	def close
+		@in.close
+	end
 end
 
 class ConfigO
-  def initialize file: ConfigDir+'/out'
-    @mode=:pulse
-    @device=nil
-    if File.file?(file)
-      cfg=File.read(file).split("\n")
-      @mode=cfg[0].to_sym
-      @device=cfg[1].to_s.chomp.length>0 ? cfg[1] : nil
-    end
-    File.write(file,@mode.to_s+"\n"+@device.to_s)
-    @out= :ffmpeg == @mode ? 
-      FfmpegPipeO.new(@device) : 
-      PulseAudioSimpleFFI::PulseAudioSimpleO.new(@device,'Music Playlist',channels:Channels,rate:Rate)
-  end
-  def write buf
-    @out.write buf
-  end
-  def close
-    @out.close
-  end
+	def initialize file: ConfigDir+'/out'
+		@mode=:pulse
+		@device=nil
+		if File.file?(file)
+			cfg=File.read(file).split("\n")
+			@mode=cfg[0].to_sym
+			@device=cfg[1].to_s.chomp.length>0 ? cfg[1] : nil
+		end
+		File.write(file,@mode.to_s+"\n"+@device.to_s)
+		@out= :ffmpeg == @mode ? 
+			FfmpegPipeO.new(@device) : 
+			PulseAudioSimpleFFI::PulseAudioSimpleO.new(Pkg,'Music Playlist',channels:Channels,rate:Rate,device:@device)
+	end
+	def write buf
+		@out.write buf
+	end
+	def close
+		@out.close
+	end
 end
 
 list,list_i,cycle,mode,ssoff,help=[],0,0,:load,'',''
 if ARGV.length==0
-  if File.file?("#{ConfigDir}/list")
-    list=File.read("#{ConfigDir}/list").split("\n")
-    if File.file?("#{ConfigDir}/pos")
-      pos=File.read("#{ConfigDir}/pos").split("\n")
-      list_i=pos[0].to_i
-      cycle=pos[1].to_i
-      cycle-=3 if cycle>3
-      ssoff="-ss #{cycle} " if cycle>0
-    end
-  else
-    puts "Usage: #{pkg} files_to_play"
-    exit 1
-  end
+	if File.file?("#{ConfigDir}/list")
+		list=File.read("#{ConfigDir}/list").split("\n")
+		if File.file?("#{ConfigDir}/pos")
+			pos=File.read("#{ConfigDir}/pos").split("\n")
+			list_i=pos[0].to_i
+			cycle=pos[1].to_i
+			cycle-=3 if cycle>3
+			ssoff="-ss #{cycle} " if cycle>0
+		end
+	else
+		puts "Usage: #{Pkg} files_to_play"
+		exit 1
+	end
 else
-  list=ARGV.map{|x|Pathname(x).realpath.to_s}
+	list=ARGV.map{|x|Pathname(x).realpath.to_s}
 end
 prefix=/\A(.*).*(\n\1.*)*\Z/.match(list.join("\n"))[1]
 puts prefix
@@ -75,59 +74,71 @@ puts prefix
 ii,io,ie,it=nil,nil,nil,nil
 oo=ConfigO.new
 
-pt=Thread.new{
-  until :quit == mode
-    if io and io.eof?
-      list_i+=1
-      mode=list_i>=list.count ? :quit : :load
-    end
-    case mode
-    when :load #load new track
-      [io,ie].each{|x|x.close} unless !io or io.closed?
-      ii,io,ie,it = Open3.popen3 "ffmpeg -loglevel -8 -i #{Shellwords.escape(list[list_i])} #{ssoff} #{FfmpegFmt} -"
-      ii.close
-      cycle=0 unless ssoff.length > 0
-      puts "#{' '*help.length}\r#{list[list_i][prefix.length..-1]}"
-      ssoff=''
-      help=''
-      mode=:play
-    when :play
-      oo.write(io.read(Channels*Rate*WordSize))
-      cycle+=1
-    end
-  end
-  oo.close
+bq=SizedQueue.new 4
+
+iit=Thread.new {
+	until :quit == mode
+		if io and io.eof?
+			list_i+=1
+			mode=list_i>=list.count ? :quit : :load
+		end
+		if :load == mode
+			[io,ie].each{|x|x.close} unless !io or io.closed?
+			ii,io,ie,it = Open3.popen3 "ffmpeg -loglevel -8 -i #{Shellwords.escape(list[list_i])} #{ssoff} #{FfmpegFmt} -"
+			ii.close
+			cycle=0 unless ssoff.length > 0
+			puts "#{' '*help.length}\r#{list[list_i][prefix.length..-1]}"
+			ssoff=''
+			help=''
+			mode=:play
+		end
+		bq.push io.read(Channels*Rate*WordSize)
+	end
+	io.close
+}
+
+oot=Thread.new{
+	until :quit == mode
+		if :play == mode
+			oo.write bq.pop
+			cycle+=1
+		else
+			sleep rand
+		end
+	end
+	oo.close
 }
 
 until :quit == mode
-  print "\r#{cycle/60}:#{"%02d"%(cycle%60)} > "
-  case ch=IO.console.raw{|c|c.read_nonblock(1) rescue ''}.downcase
-  when 'n'
-    list_i+=1
-    mode= list_i<list.count ? :load : :quit
-  when 'r'
-    mode=:load
-  when 'p'
-    if list_i>0
-      list_i-=1
-      mode=:load
-    end 
-  when 's'
-    print "Seek to: "
-    ti=(ts=IO.console.readline.chomp).split(':')
-    ssoff="-ss #{ts}"
-    cycle=(ti[-1].to_f + ti[-2].to_f*60 + ti[-3].to_f*60*60).to_i
-    mode=:load
-  when 'q'
-    mode=:quit
-    File.write(ConfigDir+"/list",list.join("\n"))
-    File.write(ConfigDir+"/pos",list_i.to_s+"\n"+cycle.to_s)
-  when ''
-    sleep rand
-  else
-    print (help="#{ch} < #{list_i>0?"[P]rev ":""}[R]estart [S]eek [N]ext [Q]uit")
-  end
+	print "\r#{cycle/60}:#{"%02d"%(cycle%60)} > "
+	case ch=IO.console.raw{|c|c.read_nonblock(1) rescue ''}.downcase
+	when 'n'
+		list_i+=1
+		mode= list_i<list.count ? :load : :quit
+	when 'r'
+		mode=:load
+	when 'p'
+		if list_i>0
+			list_i-=1
+			mode=:load
+		end 
+	when 's'
+		print "Seek to: "
+		ti=(ts=IO.console.readline.chomp).split(':')
+		ssoff="-ss #{ts}"
+		cycle=(ti[-1].to_f + ti[-2].to_f*60 + ti[-3].to_f*60*60).to_i
+		mode=:load
+	when 'q'
+		mode=:quit
+		File.write(ConfigDir+"/list",list.join("\n"))
+		File.write(ConfigDir+"/pos",list_i.to_s+"\n"+cycle.to_s)
+	when ''
+		sleep rand
+	else
+		print (help="#{ch} < #{list_i>0?"[P]rev ":""}[R]estart [S]eek [N]ext [Q]uit")
+	end
 end
 
-puts "\r    ]  #{pkg} ✝ v#{ver}  [    "
-pt.join
+puts "\r    ]  #{Pkg} ✝ v#{Ver}  [    "
+iit.join
+oot.join
