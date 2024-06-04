@@ -69,3 +69,4 @@ Command input appears to be broken on ruby versions less than 2.7.\
 0.3.5 - Removed leftover debug code. `2021-03-30`\
 0.4.0 - Modularized output devices, created native [FFI PulseAudio lib](https://github.com/Canar/pulseaudio_simple_ffi). `2021-04-02`\
 0.4.1 - Split input code into separate thread, added buffer queue. `2021-04-13`\
+0.4.2 - Updated output gem to use Fiddle. `2024-06-02`\

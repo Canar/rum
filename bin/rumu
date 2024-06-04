@@ -3,52 +3,45 @@ require 'open3'
 require 'shellwords'
 require 'io/console'
 require 'pathname'
-require 'pulseaudio_simple_ffi'
+require 'pulseaudio_simple_fiddle'
 
-Pkg='rumu'
-Ver='0.4.1'
+Pkg,Ver='rumu','0.4.2'
 ConfigDir="#{Dir.home}/.config/#{Pkg}"
 Dir.mkdir(ConfigDir) unless File.directory?(ConfigDir)
 
 Channels,Rate,WordSize=2,44100,4
 FfmpegFmt="-ac #{Channels} -ar #{Rate} -f f#{WordSize*8}le"
 
-class FfmpegPipeO
+class BasicO
+	def write(buf) = buf == nil ? buf : @dev.write(buf)
+	def close = @dev.close
+end
+
+class FfmpegPipeO < BasicO
 	def initialize(device, channels: Channels, rate: Rate, wordsize: WordSize )
 		device = device.to_s.chomp.length>0 ? device.to_s.chomp : '-f pulse default'
-		@in,@out,@err,@thr = Open3.popen3("ffmpeg -loglevel -8 #{FfmpegFmt} -i - #{device}")
+		@dev,@out,@err,@thr = Open3.popen3("ffmpeg -loglevel -8 #{FfmpegFmt} -i - #{device}")
 		@out.close
 		@err.close
 	end
-	def write buf
-		@in.write buf
-	end
-	def close
-		@in.close
-	end
 end
 
-class ConfigO
+class ConfigO < BasicO
 	def initialize file: ConfigDir+'/out'
-		@mode=:pulse
-		@device=nil
+		@mode,@devname=:pulse,nil
 		if File.file?(file)
 			cfg=File.read(file).split("\n")
 			@mode=cfg[0].to_sym
-			@device=cfg[1].to_s.chomp.length>0 ? cfg[1] : nil
+			@devname=cfg[1].to_s.chomp.length>0 ? cfg[1] : nil
 		end
-		File.write(file,@mode.to_s+"\n"+@device.to_s)
-		@out= :ffmpeg == @mode ? 
-			FfmpegPipeO.new(@device) : 
-			PulseAudioSimpleFFI::PulseAudioSimpleO.new(Pkg,'Music Playlist',channels:Channels,rate:Rate,device:@device)
-	end
-	def write buf
-		@out.write buf
-	end
-	def close
-		@out.close
+		File.write(file,@mode.to_s+"\n"+@devname.to_s)
+		@dev= :ffmpeg == @mode ? 
+			FfmpegPipeO.new(@devname) : 
+			PulseAudio::SimpleO.new(Pkg,'Music Playlist',channels:Channels,rate:Rate,device:@devname)
 	end
 end
+
+def print_brand = print "\r    ]  #{Pkg} ✝ v#{Ver}  [    "
 
 list,list_i,cycle,mode,ssoff,help=[],0,0,:load,'',''
 if ARGV.length==0
@@ -66,17 +59,16 @@ if ARGV.length==0
 		exit 1
 	end
 else
-	list=ARGV.map{|x|Pathname(x).realpath.to_s}
+	list=ARGV.map{|x| Pathname(x).realpath.to_s}
 end
 prefix=/\A(.*).*(\n\1.*)*\Z/.match(list.join("\n"))[1]
 puts prefix
 
-ii,io,ie,it=nil,nil,nil,nil
 oo=ConfigO.new
-
 bq=SizedQueue.new 4
 
 iit=Thread.new {
+	io,ie=nil,nil
 	until :quit == mode
 		if io and io.eof?
 			list_i+=1
@@ -87,10 +79,8 @@ iit=Thread.new {
 			ii,io,ie,it = Open3.popen3 "ffmpeg -loglevel -8 -i #{Shellwords.escape(list[list_i])} #{ssoff} #{FfmpegFmt} -"
 			ii.close
 			cycle=0 unless ssoff.length > 0
-			puts "#{' '*help.length}\r#{list[list_i][prefix.length..-1]}"
-			ssoff=''
-			help=''
-			mode=:play
+                        puts "#{' '*help.length}\r#{list[list_i][prefix.length..-1]}" unless list[list_i].length == prefix.length
+			ssoff,help,mode='','',:play
 		end
 		bq.push io.read(Channels*Rate*WordSize)
 	end
@@ -98,8 +88,8 @@ iit=Thread.new {
 }
 
 oot=Thread.new{
-	until :quit == mode
-		if :play == mode
+	until ( :quit == mode )
+		if ! bq.empty?
 			oo.write bq.pop
 			cycle+=1
 		else
@@ -123,22 +113,23 @@ until :quit == mode
 			mode=:load
 		end 
 	when 's'
-		print "Seek to: "
+		print 'Seek to: '
 		ti=(ts=IO.console.readline.chomp).split(':')
 		ssoff="-ss #{ts}"
 		cycle=(ti[-1].to_f + ti[-2].to_f*60 + ti[-3].to_f*60*60).to_i
 		mode=:load
 	when 'q'
 		mode=:quit
-		File.write(ConfigDir+"/list",list.join("\n"))
-		File.write(ConfigDir+"/pos",list_i.to_s+"\n"+cycle.to_s)
+		File.write(ConfigDir+'/list',list.join("\n"))
+		File.write(ConfigDir+'/pos',list_i.to_s+"\n"+cycle.to_s)
+		print_brand
 	when ''
 		sleep rand
 	else
 		print (help="#{ch} < #{list_i>0?"[P]rev ":""}[R]estart [S]eek [N]ext [Q]uit")
 	end
 end
-
-puts "\r    ]  #{Pkg} ✝ v#{Ver}  [    "
-iit.join
 oot.join
+print_brand
+puts
+
